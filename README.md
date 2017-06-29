@@ -1,0 +1,3 @@
+# Exploration and analysis of two infection experiments
+
+Many parasitic worms are trophically-transmitted. That is, they are transmitted when one host is eaten by the next host. It has often been shown that worms experience 'crowding' when they share intermediate hosts. Worms tend to be smaller at higher infection intensities. Does this have consequences for the worms? I conducted two experiments exploring this idea in two worm species, a nematode (Camallanus lacustris) and a cestode (Schistocephalus solidus). This repository contains the data from these experiments and analyses of these data. Each folder contains a md file which serves as a readable report of the analyses.
