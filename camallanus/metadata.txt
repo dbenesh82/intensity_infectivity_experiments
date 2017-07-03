@@ -1,0 +1,25 @@
+This txt file describes the data contained in the 'cam_fish_inf.csv'. The data are from an experiment in which stickleback fish were infected with the nematode worm Camallanus. All fish received 6 worms via a copepod intermediate host, but the worms were distributed differently in the intermediate hosts: one worm per copepod, two worms per copepod, or three worms per copepod. The goal of the experiment was to test whether crowding (more worms per copepod) affected establishment probability in fish.
+
+Here are descriptions of the columns.
+
+Fish - index variable
+
+Fish family - fish belonged to one of three full sib families.
+
+Block - experimental block. Block 1 was conducted ~2 months before block 2.
+
+Treatment - experimental treatment. Each fish received 6 worms. Fish were given either 6 copepods with 1 worm each (1x6), 3 copepods with 2 worms each (2x3), or 2 copepods with 3 worms each (3x2).
+
+Length - total fish length in mm
+
+Weight - total fish weight in g
+
+Liver weight - weight of the liver in g. This is sometimes used for calculating a condition index.
+
+Fish_sex - male or female fish. Four fish could not be sexed with certainty.
+
+Uneaten - copepods given to fish that were not consumed. Only one fish did not eat all the copepods it was given. And in that case, the uneaten copepod was uninfected. Thus, the fish still presumably received a full dose of 6 worms.
+
+Dose - all fish received 6 worms.
+
+Intensity - the number of worms recovered. Fish were dissected 1 week after exposure.

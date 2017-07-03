@@ -1,0 +1,33 @@
+This txt file describes the data contained in the 'Schisto_double_exposure.csv'. The data are from an experiment in which stickleback fish were infected with the cestode worm Schistocephalus. All fish received 6 worms via a copepod intermediate host, but the worms were distributed differently in the intermediate hosts: one worm per copepod or two worms per copepod. The goal of the experiment was to test whether crowding (more worms per copepod) affected establishment probability in fish.
+
+Here are descriptions of the columns.
+
+Fish - index variable
+
+Clutch - parasite full-sib family.
+
+Treatment - experimental treatment. Two worms were given to fish, with either both worms in the same copepod (2+0) or worms in separate copepods (1+1).
+
+Total Length - total fish length in mm (to end of tail fin)
+
+Std Length - standard fish length in mm (excluding tail fin)
+
+Fish weight - total fish weight in g, includes worm weight
+
+Inf - the number of worms recovered upon dissection.
+
+Sex - male or female fish.
+
+Worm 1 - weight of first Schistocephalus worm recovered in mg.
+
+Worm 2 - weight of second Schistocephalus worm recovered in mg.
+
+Dead - did worm survive until dissection (0) or was it found dead (1)?
+
+Dissected - date the fish was dissected.
+
+Early and late exposure - there were two fish exposures, five days apart. Fish from both exposures were maintained in the same tanks, so which fish were exposed on which date cannot be determined. 
+
+Age_at_diss1 and Age_at_diss2 - Days after exposure fish were dissected. Age_at_diss1 is if the fish was exposed on the earlier date and Age_at_diss2 is if the fish was exposed on the later date.
+
+Remark - miscellaneous comments
