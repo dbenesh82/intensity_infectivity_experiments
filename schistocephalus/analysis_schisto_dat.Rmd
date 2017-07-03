@@ -107,7 +107,7 @@ summary(modb)
 anova(modb, test = "Chi")
 ```
 
-This model suggests that infection decreases in bigger fish, and that there is no effect of crowding. Overdispersion seems mild. The ratio of residual deviance to residual degrees of freedom is about 1.4, so we would expect the results to be unaffected by using `family = 'quasibinomial'` argument.
+This model suggests that infection decreases in bigger fish, and that there is no effect of crowding. Overdispersion seems mild. The ratio of residual deviance to residual degrees of freedom is about 1.4, so we would expect the results to be unaffected by using the argument `family = 'quasibinomial'`.
 
 ```{r}
 modb <- glm(cbind(intensity, dose - intensity) ~ tl + trt, data = sdat, family = 'quasibinomial')
@@ -200,7 +200,7 @@ anova(mod2, mod3, test = "LRT")
 
 This model is not an improvement, and treatment is still not significant (not shown). Thus, we can conclude that the treatment effect is not altered by other variables. 
 
-So I think two models can be justifed. The full model (trt + tl + fsex + worm.fam) because it simply includes all the variables we presumed could be important. Or a reduced model (trt + tl) which only includes length (a variable that matters) and treatment (the variable we are interested in testing).
+So I think two models can be justifed. The full model `trt + tl + fsex + worm.fam` because it simply includes all the variables we presumed could be important. Or a reduced model `trt + tl` which only includes length (a variable that matters) and treatment (the variable we are interested in testing).
 
 Let's make a couple publishable plots that visualize the data.
 
