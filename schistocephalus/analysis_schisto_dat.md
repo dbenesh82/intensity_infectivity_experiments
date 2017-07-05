@@ -20,34 +20,27 @@ head(sdat)
 ```
 
 ```
-##   ï..Fish_no Clutch Treatment Total.Length Std.Length Fish.weight Inf. Sex
-## 1          1      S       2+0           45         40       0.774    1   f
-## 2          2      S       2+0           37         33       0.391    2   f
-## 3          3      S       2+0           40         35       0.444    2   f
-## 4          4      S       2+0           37         33       0.367    1   m
-## 5          5      S       1+1           40         36       0.540    2   f
-## 6          6      S       1+1           38         34       0.410    2   m
-##   Worm.1..mg. Worm.2..mg. Total.WW Dead Early.exposure Later.exposure
-## 1       184.7          NA    184.7    0      6/23/2010      6/28/2010
-## 2        73.6        66.0    139.6    0      6/23/2010      6/28/2010
-## 3        62.2        64.8    127.0    0      6/23/2010      6/28/2010
-## 4       113.2          NA    113.2    0      6/23/2010      6/28/2010
-## 5        93.5        62.3    155.8    0      6/23/2010      6/28/2010
-## 6        73.7        58.5    132.2    0      6/23/2010      6/28/2010
-##   Dissected Age_at_diss1 Age_at_diss2
-## 1 10/5/2010          104           99
-## 2 10/5/2010          104           99
-## 3 10/5/2010          104           99
-## 4 10/5/2010          104           99
-## 5 10/5/2010          104           99
-## 6 10/5/2010          104           99
-##                                      Remark
-## 1 Fish 1-42 killed and dissected on 5.10.10
-## 2                                          
-## 3                                          
-## 4                                          
-## 5                                          
-## 6
+##   Fish_no Clutch Treatment Total.Length Std.Length Fish.weight Inf. Sex
+## 1       1      S       2+0           45         40       0.774    1   f
+## 2       2      S       2+0           37         33       0.391    2   f
+## 3       3      S       2+0           40         35       0.444    2   f
+## 4       4      S       2+0           37         33       0.367    1   m
+## 5       5      S       1+1           40         36       0.540    2   f
+## 6       6      S       1+1           38         34       0.410    2   m
+##   Worm1 Worm2 Dead Dissected Early.exposure Later.exposure Age_at_diss1
+## 1 184.7    NA    0 10/5/2010      6/23/2010      6/28/2010          104
+## 2  73.6  66.0    0 10/5/2010      6/23/2010      6/28/2010          104
+## 3  62.2  64.8    0 10/5/2010      6/23/2010      6/28/2010          104
+## 4 113.2    NA    0 10/5/2010      6/23/2010      6/28/2010          104
+## 5  93.5  62.3    0 10/5/2010      6/23/2010      6/28/2010          104
+## 6  73.7  58.5    0 10/5/2010      6/23/2010      6/28/2010          104
+##   Age_at_diss2 Remark
+## 1           99       
+## 2           99       
+## 3           99       
+## 4           99       
+## 5           99       
+## 6           99
 ```
 
 Clean up the data a bit.
@@ -386,7 +379,7 @@ chisq.test(cont.table, simulate.p.value = TRUE)
 ## 	replicates)
 ## 
 ## data:  cont.table
-## X-squared = 5.1744, df = NA, p-value = 0.08546
+## X-squared = 5.1744, df = NA, p-value = 0.09195
 ```
 
 This chi-square test is marginally non-significant. So, there is suggestive evidence that the data are distributed differently in the two treatments, despite their similar mean values. This is an interesting observation, but it is something we would like to confirm with more data.
