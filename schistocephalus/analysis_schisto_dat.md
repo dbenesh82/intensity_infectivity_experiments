@@ -183,7 +183,7 @@ ggplot(data = mdat, aes(y = intensity/dose, x = tl, color = age_fac)) +
 
 ![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
-And this negative relationship is significant when We fit a logistic regression for the majority of fish dissected at approximately the same time. Treatment effects are still non-significant, though.
+And this negative relationship is significant when we fit a logistic regression with only the majority of fish dissected at about the same time. Treatment effects are still non-significant, though.
 
 ``` r
 # just fit to fish of same age
@@ -300,7 +300,7 @@ summary(mod1)
     ## 
     ## Number of Fisher Scoring iterations: 4
 
-And the results are similar. Below we examine the distribution of the data and whether the binomial distribution fits the data well. But first we'll fit a couple more models. To be conservative we will use `family = 'quasibinomial'`
+The results are similar. Below we examine the distribution of the data and whether the binomial distribution fits the data well. But first we'll fit a couple more models. To be conservative we will use `family = 'quasibinomial'`
 
 *Model 2*: treatment plus fish variables (just sex, given concerns with fish length discussed above)
 
@@ -364,7 +364,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
 
 ![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-18-1.png)
 
-For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently. We can do chi-square tests to see if these differences are significant. First, we'll confirm that the uncrowded treatment is well-approximated by the binomial.
+For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently than expected. We can do chi-square tests to see if these differences are significant. First, we'll confirm that the uncrowded treatment is well-approximated by the binomial.
 
 ``` r
 # contingency table
@@ -388,7 +388,7 @@ chisq.test(x = cont.table[1,],
 # using the option to get a p-value by Monte Carlo simulation yields comparable results
 ```
 
-The difference is non-significant. Now, we'll check in the crowded treatment. It is marginally significant, suggesting that null and double infections are overrepresented.
+The difference is non-significant. Now, we'll check in the crowded treatment. It is marginally significant, suggesting that null and double infections are overrepresented, relative to expectations.
 
 ``` r
 # test if the observed and expected distributions differ for the crowded treatment
@@ -409,7 +409,7 @@ chisq.test(x = cont.table[2,],
 # using the option to get a p-value by Monte Carlo simulation yields comparable but slightly more conservative results
 ```
 
-Instead of comparing the distribution of each treatment to the expected binomial distribution, we could compare them to each other.
+Instead of comparing the distribution of each treatment to the expected binomial distribution, we could compare them to each other. That is are the data distributed differently in the two treatments, even though the means are not different?
 
 ``` r
 chisq.test(cont.table)
