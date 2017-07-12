@@ -1,8 +1,6 @@
 ---
 title: "Effect of Camallanus infections"
-output: 
-  html_document: 
-    keep_md: yes
+output: github_document
 ---
 
 **Background**: these data are from an experiment in which stickleback fish were infected with a nematode worm. Fish were each given six worms via a copepod intermediate host. There were three treatments. Fish were either given six worms in six copepods (one worm per copepod), six worms in three copepods (two per copepod), or six worms in two copepods (three per copepod). The goal of the experiment was to determine if crowding in the intermediate host affects a worm's chance of successfully infecting a fish.
@@ -118,7 +116,38 @@ mod0 <- glm(cbind(intensity, dose - intensity) ~ block + tl + trt, data = cdat, 
 summary(mod0)
 ```
 
-There are some block and treatments significant effects in this model. But we should notice the high ratio of residual deviance (111.7) to the residual degrees of freedom (30). This is an indication of overdispersion; the variation in the data is greater than we would expect if the residuals followed a binomial distribution. This is common, and we can see this by plotting the observed data over expectations under the binomial assumption.
+There are some significant block and treatment effects in this model. But we should notice the high ratio of residual deviance (111.7) to the residual degrees of freedom (30). This is an indication of overdispersion; the variation in the data is greater than we would expect if the residuals followed a binomial distribution. This is common, and we can see the overdispersion by plotting the observed data next to expectations under the binomial.
+
+```{r, message=FALSE, warning=FALSE}
+# get expected frequencies, based on binomial, given mean infection rate
+mean.inf.rate <- mean(cdat$intensity/cdat$dose, na.rm=T)
+expected <- dbinom(0:6, size = 6, prob = mean.inf.rate)
+
+# calculate the proportion of fish with different infection intensities for each treatment
+observed <- data.frame( prop.table(table(cdat$intensity)) )
+names(observed) <- c('intensity', 'observed')
+
+# combine expected and observed distributions and plot
+binom_exp <- cbind(observed, expected)%>%
+  gather('dist', 'freq', expected:observed)
+
+ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) + 
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  labs(y = 'frequency', fill = NULL) +
+  theme_bw()
+```
+
+The histograms shows how there are more extreme values than expected, such as cases where all or none of the worms infected the fish. On reflection, this makes sense. The worms sharing a copepod are not independent from one another. If they are in a "bad" copepod, all the worms may have a reduced chance to infect the next host. We can confirm that this is a significant departure from expectations with a chi-square test. 
+
+```{r}
+# make one-dimensional contingency table
+cont.table <- table(cdat$intensity)
+
+# calculate chi-square test; simulation used to get p-value, given small sample sizes
+chisq.test(cont.table, p = expected, simulate.p.value = TRUE, B = 10000)
+```
+
+If worms within a copepod tend to have a shared fate (all succeed or all fail), then we might expect the departure from a binomial distribution to get more pronounced with crowding. Let's compare empirical and expected distributions for each each treatment.
 
 ```{r, message=FALSE, warning=FALSE}
 # get the expected binomial distribution, given the mean in each treatments
@@ -143,7 +172,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   facet_wrap(~trt) + theme_bw()
 ```
 
-The plot shows how there are more extreme values than expected for each treatment, such as cases where all or none of the worms infected the fish. On reflection, this makes sense. The worms sharing a copepod are not independent from one another. If they are in a "bad" copepod, all the worms may have a reduced chance to infect the next host. This divergence from the expected distribution seems to get more pronounced with infection dose. We can do chi-square tests to see if these differences are significant, starting with the one worm per copepod treatment.
+The patterns seem consistent with this idea, e.g. there is a noticeable overabundance of high and low intensities in the most crowded treatment (3x2). Let's run chi-square tests for each treatment separately to confirm they differ from the binomial.
 
 ```{r}
 # contingency table
@@ -152,37 +181,28 @@ cont.table <- table(cdat$trt, cdat$intensity)
 # test if the observed and expected distributions differ for the one per copepod treatment
 chisq.test(x = cont.table[1,],
            p = dbinom(0:6, size = 6, prob = cd_avg$inf.rate[1]),
-           simulate.p.value = TRUE)
-# using the option to get a p-value by Monte Carlo simulation is needed given small sample sizes
-```
-
-The difference is marginally significant, suggesting that low and high intensities are overrepresented. Now, we'll check in the two crowded treatments. 
-
-```{r}
+           simulate.p.value = TRUE, B = 10000)
 # test if the observed and expected distributions differ for the two per copepod treatment
 chisq.test(x = cont.table[2,],
            p = dbinom(0:6, size = 6, prob = cd_avg$inf.rate[2]),
-           simulate.p.value = TRUE)
-
+           simulate.p.value = TRUE, B = 10000)
 # test if the observed and expected distributions differ for the three per copepod treatment
 chisq.test(x = cont.table[3,],
            p = dbinom(0:6, size = 6, prob = cd_avg$inf.rate[3]),
-           simulate.p.value = TRUE)
-
+           simulate.p.value = TRUE, B = 10000)
 # using the option to get a p-value by Monte Carlo simulation is needed given small sample sizes
 ```
 
-Both are significant. The deviance from the expected distribution (measured by the chi-square statistic) increases with crowding.
-
-Instead of comparing the distribution of each treatment to the expected binomial distribution, we could compare them to each other. 
+All are significant, and the deviance from the expected distribution (measured by the chi-square statistic) increases with crowding. Low and high intensities are most overrepresented in the most crowded treatment. It is useful to note a divergence from an expected distribution, as it suggests a violation of assumptions (most likely independence in this case). But we are particularly interested in whether distributions in each treatment differ from one another. Again, chi-square can be used to test this (fisher's exact test may be preferable with small sample sizes, but the results are similar with either).
 
 ```{r}
-chisq.test(cont.table, simulate.p.value = TRUE)
+chisq.test(cont.table, simulate.p.value = TRUE, B = 10000)
 ```
 
-It is non-significant, suggesting that the distribution in each treatment does not differ. Even though the distribution plot above is suggestive, this test is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, it does not test for a trend with crowding intensity.
+It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, and deviation from this distribution increases with crowding. However, it would be premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
 
-Returning to our modeling approach, in cases like this, where the data are more variable that expected based on the binomial, it is usual to use 'quasibinomial' as the family argument. The model parameters are unchanged, but their standard errors are inflated in accordance with the amount of overdispersion. Thus, the significance tests are much more conservative.
+
+Returning to our modeling approach, in cases like this, where the data are more variable that expected based on the binomial, it is usual to use `'quasibinomial'` as the family argument. The model parameters are unchanged, but their standard errors are inflated in accordance with the amount of overdispersion. Thus, the significance tests are much more conservative.
 
 ```{r}
 mod0 <- glm(cbind(intensity, dose - intensity) ~ block + tl + trt, data = cdat, family = 'quasibinomial')
@@ -227,13 +247,13 @@ mod4 <- glm(cbind(intensity, dose - intensity) ~ block + tl + ffam + trt, data =
 anova(mod4, test = "F")
 ```
 
-Treatment looks more important here, but it is still not significant. Is this larger model an improvement? Let's make a few model comparisons with likelihood ratio tests.
+Treatment looks more important here, but it is still not significant. Is this larger model an improvement over the simplest model with just treatment? Let's compare the models with a likelihood ratio test.
 
 ```{r}
-anova(mod1, mod2, mod4, test = "F") 
+anova(mod1, mod4, test = "F") 
 ```
 
-No terms significantly improve the model. Note: without accounting for overdispersion (using `family = 'binomial'` instead of `family = 'quasibinomial'`), the addition of block is a significant improvement, but then adding more fish variables is not an improvement.
+It is still not a significant improvement. Note: without accounting for overdispersion (using `family = 'binomial'` instead of `family = 'quasibinomial'`), the addition of block is a significant improvement, but then adding more fish variables is not an improvement.
 
 So the modeling exercises above suggest that our non-significant treatment effect is somewhat dependent on block but not fish size. Let's visualize this. We'll plot the model predictions (+- 95% CI) over the data. First, we'll get the model predictions in a form for plotting.
 
