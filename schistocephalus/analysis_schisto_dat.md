@@ -341,6 +341,46 @@ So I think two models can be justified. I prefer a simple model with just `trt`,
 We noted some overdispersion in the logistic regression, so let's look at how well the binomial approximates the observed data distribution.
 
 ``` r
+# get the expected binomial distribution, given the overall mean infection rate
+mean.inf.rate <- mean(sdat$intensity/sdat$dose, na.rm=T)
+expected <- dbinom(0:2, size = 2, prob = mean.inf.rate)
+
+# calculate the proportion of fish with different infection intensities for each treatment
+observed <- data.frame( prop.table(table(sdat$intensity)) )
+names(observed) <- c('intensity', 'observed')
+
+# combine expected and observed distributions and plot
+binom_exp <- cbind(observed, expected)%>%
+  gather('dist', 'freq', expected:observed)
+
+ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) + 
+  geom_bar(stat = 'identity', position = position_dodge()) +
+  labs(y = 'frequency', fill = NULL) +
+  theme_bw()
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-18-1.png)
+
+It looks like a reasonable fit, which we can confirm using a chi-square test.
+
+``` r
+# make one-dimensional contingency table
+cont.table <- table(sdat$intensity)
+
+# calculate chi-square test; simulation used to get p-value, given small sample sizes
+chisq.test(cont.table, p = expected, simulate.p.value = TRUE, B = 10000)
+```
+
+    ## 
+    ##  Chi-squared test for given probabilities with simulated p-value
+    ##  (based on 10000 replicates)
+    ## 
+    ## data:  cont.table
+    ## X-squared = 2.283, df = NA, p-value = 0.3175
+
+Even though this test is non-significant, it is worth looking at the distribution in each treatment separately. In the crowded treatment, worms are not independent from one another. They may be more likely to all succeed or all fail, which would cause divergence from the expectations under a binomial distribution. This seems to apply to our other experiment with *Camallanus* (see [here](https://github.com/dbenesh82/intensity_infectivity_experiments/blob/master/camallanus/analysis_cam_dat.md)). So let's plot the observed and expected distribution for each treatment separately.
+
+``` r
 # get the expected binomial distribution, given the mean in each treatments
 expected <- c(dbinom(0:2, size = 2, prob = sd_avg$inf.rate[1]),
               dbinom(0:2, size = 2, prob = sd_avg$inf.rate[2]))
@@ -362,9 +402,9 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   facet_wrap(~trt) + theme_bw()
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-20-1.png)
 
-For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently than expected. We can do chi-square tests to see if these differences are significant. First, we'll confirm that the uncrowded treatment is well-approximated by the binomial.
+For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently than expected. We can do chi-square tests to see if these differences are significant.
 
 ``` r
 # contingency table
@@ -385,12 +425,6 @@ chisq.test(x = cont.table[1,],
     ## X-squared = 0.33727, df = 2, p-value = 0.8448
 
 ``` r
-# using the option to get a p-value by Monte Carlo simulation yields comparable results
-```
-
-The difference is non-significant. Now, we'll check in the crowded treatment. It is marginally significant, suggesting that null and double infections are overrepresented, relative to expectations.
-
-``` r
 # test if the observed and expected distributions differ for the crowded treatment
 chisq.test(x = cont.table[2,],
            p = dbinom(0:2, size = 2, prob = sd_avg$inf.rate[2]))
@@ -406,8 +440,10 @@ chisq.test(x = cont.table[2,],
     ## X-squared = 7.1203, df = 2, p-value = 0.02843
 
 ``` r
-# using the option to get a p-value by Monte Carlo simulation yields comparable but slightly more conservative results
+# using the option to get a p-value by Monte Carlo simulation yields comparable results
 ```
+
+The difference is non-significant for the uncrowded treatment, but it is significant for the crowded treatment, suggesting that null and double infections are overrepresented, relative to expectations.
 
 Instead of comparing the distribution of each treatment to the expected binomial distribution, we could compare them to each other. That is are the data distributed differently in the two treatments, even though the means are not different?
 
@@ -484,7 +520,7 @@ ggplot(sd_avg, aes(x = trt, y = param)) +
   scale_x_discrete(expand = c(0.25, 0))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-24-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-25-1.png)
 
 The means (black points) are very similar in the two groups, but the red points show how the distribution of the data might be different in the two treatments.
 
@@ -525,6 +561,6 @@ ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) +
         axis.text.x = element_text(colour="black", size = 12, face = "plain"))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-26-1.png)
 
 **Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, it is possible that worms from crowded intermediate hosts are more likely to either both establish or neither establish. This needs further study.
