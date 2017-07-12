@@ -300,6 +300,23 @@ summary(mod1)
     ## 
     ## Number of Fisher Scoring iterations: 4
 
+``` r
+anova(mod1, test = 'F')
+```
+
+    ## Analysis of Deviance Table
+    ## 
+    ## Model: quasibinomial, link: logit
+    ## 
+    ## Response: cbind(intensity, dose - intensity)
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ## 
+    ##      Df Deviance Resid. Df Resid. Dev     F Pr(>F)
+    ## NULL                    56     90.709             
+    ## trt   1 0.051191        55     90.658 0.041 0.8402
+
 The results are similar. Below we examine the distribution of the data and whether the binomial distribution fits the data well. But first we'll fit a couple more models. To be conservative we will use `family = 'quasibinomial'`
 
 *Model 2*: treatment plus fish variables (just sex, given concerns with fish length discussed above)
@@ -376,7 +393,7 @@ chisq.test(cont.table, p = expected, simulate.p.value = TRUE, B = 10000)
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table
-    ## X-squared = 2.283, df = NA, p-value = 0.3175
+    ## X-squared = 2.283, df = NA, p-value = 0.3153
 
 Even though this test is non-significant, it is worth looking at the distribution in each treatment separately. In the crowded treatment, worms are not independent from one another. They may be more likely to all succeed or all fail, which would cause divergence from the expectations under a binomial distribution. This seems to apply to our other experiment with *Camallanus* (see [here](https://github.com/dbenesh82/intensity_infectivity_experiments/blob/master/camallanus/analysis_cam_dat.md)). So let's plot the observed and expected distribution for each treatment separately.
 

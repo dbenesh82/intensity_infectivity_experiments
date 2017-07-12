@@ -149,6 +149,7 @@ There is no effect of crowding. Overdispersion seems mild. The ratio of residual
 ```{r}
 mod1 <- glm(cbind(intensity, dose - intensity) ~ trt, data = sdat, family = 'quasibinomial')
 summary(mod1)
+anova(mod1, test = 'F')
 ```
 
 The results are similar. Below we examine the distribution of the data and whether the binomial distribution fits the data well. But first we'll fit a couple more models. To be conservative we will use `family = 'quasibinomial'`
