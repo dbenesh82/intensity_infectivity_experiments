@@ -297,15 +297,15 @@ First make a plot comparing treatment groups.
 mod1.1 <- glm(cbind(intensity, dose - intensity) ~ trt - 1, data = sdat, family = 'quasibinomial')
 
 sd_avg <- get_ci_log_reg(mod1.1)
-sd_avg <- mutate(sd_avg, trt = factor(trt, labels = c("Uncrowded", "Crowded")))
+sd_avg <- mutate(sd_avg, trt = factor(trt, labels = c("One/Copepod", "Two/Copepod")))
 
-sdat <- mutate(sdat, trtf = factor(trt, labels = c("Uncrowded", "Crowded"))) # need this var for overlaying data on means
+sdat <- mutate(sdat, trtf = factor(trt, labels = c("One/Copepod", "Two/Copepod"))) # need this var for overlaying data on means
 
 ggplot(sd_avg, aes(x = trt, y = param)) +
   geom_dotplot(data = sdat, aes(y = intensity/dose, x = trtf),
                fill = 'red', alpha = 0.5,
                binaxis = 'y', stackdir = 'center') +
-  geom_point(size = 3) +
+  geom_point(size = 10, shape = "-") +
   geom_errorbar(aes(ymin = cil, ymax = ciu), width = 0.25) +
   labs(y = "Infection rate") +
   scale_y_continuous(limits = c(0,1)) + 
@@ -330,9 +330,9 @@ preddat <- cbind(newdat, preddat)
 preddat <- mutate(preddat,
                   ciu = fit + 1.96 * se.fit,
                   cil = fit - 1.96 * se.fit,
-                  trt = factor(trt, labels = c("Uncrowded", "Crowded")))
+                  trt = factor(trt, labels = c("One/Copepod", "Two/Copepod")))
 
-sdat$trtf <- factor(sdat$trt, labels = c("Uncrowded", "Crowded"))
+sdat$trtf <- factor(sdat$trt, labels = c("One/Copepod", "Two/Copepod"))
 
 
 ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) + 
