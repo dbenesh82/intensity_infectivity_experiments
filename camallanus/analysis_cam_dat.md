@@ -1,4 +1,4 @@
-Effect of Camallanus infections
+Crowding and Camallanus infection probability
 ================
 
 **Background**: these data are from an experiment in which stickleback fish were infected with a nematode worm. Fish were each given six worms via a copepod intermediate host. There were three treatments. Fish were either given six worms in six copepods (one worm per copepod), six worms in three copepods (two per copepod), or six worms in two copepods (three per copepod). The goal of the experiment was to determine if crowding in the intermediate host affects a worm's chance of successfully infecting a fish.
@@ -11,8 +11,6 @@ library(dplyr)
 library(tidyr)
 library(boot)
 library(MuMIn)
-
-setwd("C:/Users/phosp/OneDrive/Documents/Benesh/Research/Intensity_infectivity/analysis/camallanus/")
 
 cdat <- read.csv(file = "cam_fish_inf.csv", header = TRUE, sep = ',')
 head(cdat)
@@ -64,14 +62,14 @@ cd_avg <- group_by(cdat, trt)%>%
 cd_avg 
 ```
 
-    ## # A tibble: 3 × 3
+    ## # A tibble: 3 x 3
     ##      trt     n  inf.rate
     ##   <fctr> <int>     <dbl>
     ## 1    1x6     8 0.5625000
     ## 2    2x3    11 0.4848485
     ## 3    3x2    16 0.3750000
 
-Let's start fitting models. The response variable (infection) is a proportion, so we will run a logistic regression. To get an idea of which variables are important, we'll fit many models. All the models will include treatment, because that's what we want to test. But first we need to filter rows with missing values, so that the sample size is constant, regardless of the variables in the model.
+Let's start by fitting models. The response variable (infection) is a proportion, so we will run a logistic regression. To get an idea of which variables are important, we'll fit many models. All the models will include treatment, because that's what we want to test. But first we need to filter rows with missing values, so that the sample size is constant, regardless of the variables in the model.
 
 ``` r
 mdat <- filter(cdat, !is.na(fsex)) # remove rows with missing fish sex data; sex was only variable with missing data
@@ -105,12 +103,12 @@ group_by(cdat, fsex)%>%
   select(fsex, n, inf.rate)
 ```
 
-    ## # A tibble: 3 × 3
+    ## # A tibble: 3 x 3
     ##     fsex     n  inf.rate
     ##   <fctr> <int>     <dbl>
     ## 1      F    17 0.5294118
     ## 2      M    14 0.4404762
-    ## 3     NA     4 0.1666667
+    ## 3   <NA>     4 0.1666667
 
 Let's get rid of fish sex and re-fit the model. This uses the full dataset.
 
@@ -131,7 +129,7 @@ importance(model.set)
     ## Importance:          1.00 0.74  0.36 0.31 0.26 0.07 
     ## N containing models:   20   10    12   12   10    4
 
-Total length and fish weight are less important now, so it seems like those 4 fish with missing sex values mattered. This is because these fish (blue below) tend to nullify a previously negative relationship (red line) between size and infection.
+Total length and fish weight are less important now, so it seems like those 4 fish with missing sex values mattered. This is because these fish (blue line below) tend to nullify a previously negative relationship (red line) between size and infection.
 
 ``` r
 ggplot(data = cdat, aes(x = tl, y = intensity/dose, color = is.na(fsex))) + 
@@ -141,7 +139,7 @@ ggplot(data = cdat, aes(x = tl, y = intensity/dose, color = is.na(fsex))) +
   geom_smooth(aes(color = NULL), se = FALSE, color = 'black', method = 'lm') # for full dataset
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-9-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
 This relationship between fish length and infection rate is not particularly convincing. Still, it seems prudent to include a size variable in the final model, because in many host-parasite systems it is important.
 
@@ -152,7 +150,7 @@ ggplot(cdat, aes(y = intensity/dose, x = block)) + geom_boxplot() +
   geom_dotplot(fill = 'red', binaxis = 'y', stackdir = 'center')
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-10-1.png)
 
 Here are the top 5 models.
 
@@ -229,7 +227,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   theme_bw()
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-13-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-13-1.png)
 
 The histograms shows how there are more extreme values than expected, such as cases where all or none of the worms infected the fish. On reflection, this makes sense. The worms sharing a copepod are not independent from one another. If they are in a "bad" copepod, all the worms may have a reduced chance to infect the next host. We can confirm that this is a significant departure from expectations with a chi-square test.
 
@@ -273,7 +271,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   facet_wrap(~trt) + theme_bw()
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-15-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-15-1.png)
 
 The patterns seem consistent with this idea, e.g. there is a noticeable overabundance of high and low intensities in the most crowded treatment (3x2). Let's run chi-square tests for each treatment separately to confirm they differ from the binomial.
 
@@ -292,7 +290,7 @@ chisq.test(x = cont.table[1,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[1, ]
-    ## X-squared = 18.753, df = NA, p-value = 0.0456
+    ## X-squared = 18.753, df = NA, p-value = 0.0442
 
 ``` r
 # test if the observed and expected distributions differ for the two per copepod treatment
@@ -306,7 +304,7 @@ chisq.test(x = cont.table[2,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[2, ]
-    ## X-squared = 22.839, df = NA, p-value = 0.0127
+    ## X-squared = 22.839, df = NA, p-value = 0.0135
 
 ``` r
 # test if the observed and expected distributions differ for the three per copepod treatment
@@ -320,7 +318,7 @@ chisq.test(x = cont.table[3,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[3, ]
-    ## X-squared = 113.28, df = NA, p-value = 9.999e-05
+    ## X-squared = 113.28, df = NA, p-value = 2e-04
 
 ``` r
 # using the option to get a p-value by Monte Carlo simulation is needed given small sample sizes
@@ -337,9 +335,9 @@ chisq.test(cont.table, simulate.p.value = TRUE, B = 10000)
     ##  replicates)
     ## 
     ## data:  cont.table
-    ## X-squared = 10.813, df = NA, p-value = 0.6001
+    ## X-squared = 10.813, df = NA, p-value = 0.5988
 
-It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, and deviation from this distribution increases with crowding. However, it would be premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
+It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, but it seems premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
 
 Returning to our modeling approach, in cases like this, where the data are more variable that expected based on the binomial, it is usual to use `'quasibinomial'` as the family argument. The model parameters are unchanged, but their standard errors are inflated in accordance with the amount of overdispersion. Thus, the significance tests are much more conservative.
 
@@ -365,9 +363,9 @@ anova(mod0, test = "F")
 
 Now there is no signifant effect of block, fish size, or treatment (treatment was significant before the adjustment for overdispersion).
 
-We came to this model through a brute force kind of approach (i.e. fitting many models). But we can also try to think of justifiable models a priori. Let's fit a couple for comparison.
+We came to this model through a brute force kind of approach (i.e. fitting many models). But we can also try to think of justifiable models *a priori*. Let's fit a couple for comparison.
 
-*Model 1*: only treatment. This assumes that the effects of other variables are randomized across the treatments and will thus not bias treatment effects. That is, there is no need to control for these effects.
+**Model 1**: only treatment. This assumes that the effects of other variables are randomized across the treatments and will thus not bias treatment effects. That is, there is no need to control for these effects.
 
 ``` r
 mod1 <- glm(cbind(intensity, dose - intensity) ~ trt, data = cdat, family = 'quasibinomial')
@@ -389,7 +387,7 @@ anova(mod1, test = "F")
 
 The treatment effect is not significant. Let's add other variables we want to account for.
 
-*Model 2*: add block. The experimental block has no biological relevance, so it can be fit without much interest in the parameter estimates.
+**Model 2**: add block. The experimental block has no biological relevance, so it can be fit without much interest in the parameter estimates.
 
 ``` r
 mod2 <- glm(cbind(intensity, dose - intensity) ~ block + trt, data = cdat, family = 'quasibinomial')
@@ -410,9 +408,9 @@ anova(mod2, test = "F")
     ## block  1   1.6702        33     120.23 0.5722 0.4551
     ## trt    2   7.9754        31     112.26 1.3661 0.2700
 
-There are not big differences between blocks, but controlling for it, affects how much deviance is explained by treatment. It is still not significant though.
+There are not big differences between blocks, but controlling for it affects how much deviance is explained by treatment. It is still not significant though.
 
-*Model 3*: only fish variables (except fish sex). The idea here is that we control for fish traits that might affect susceptibility to infection, like size and family background. Only include one measure of fish size (i.e. not both length and weight due to their strong correlation).
+**Model 3**: only fish variables (except fish sex). The idea here is that we control for fish traits that might affect susceptibility to infection, like size and family background. Only include one measure of fish size (i.e. not both length and weight due to their strong correlation).
 
 ``` r
 mod3 <- glm(cbind(intensity, dose - intensity) ~ tl + ffam + trt, data = cdat, family = 'quasibinomial')
@@ -436,7 +434,7 @@ anova(mod3, test = "F")
 
 Neither fish length nor family appear very important, and they do not have as much of an impact on the treatment effect.
 
-*Model 4*: a model with both block and fish variables. With more model terms, overdispersion may decrease as more residual deviance is explained. However, even in this larger model the dispersion parameter is about 3 (i.e. it is still a problem).
+**Model 4**: a model with both block and fish variables. With more model terms, overdispersion may decrease as more residual deviance is explained. However, even in this larger model the dispersion parameter is about 3 (i.e. it is still a problem).
 
 ``` r
 mod4 <- glm(cbind(intensity, dose - intensity) ~ block + tl + ffam + trt, data = cdat, family = 'quasibinomial')
@@ -459,7 +457,7 @@ anova(mod4, test = "F")
     ## ffam   2   2.2904        30     117.91 0.3633 0.6986
     ## trt    2  11.1397        28     106.77 1.7671 0.1894
 
-Treatment looks more important here, but it is still not significant. Is this larger model an improvement over the simplest model with just treatment? Let's compare the models with a likelihood ratio test.
+Treatment looks more important here, but it is still not significant. Is this larger model an improvement over the simplest model with just treatment? Let's compare them with a likelihood ratio test.
 
 ``` r
 anova(mod1, mod4, test = "F") 
@@ -525,7 +523,7 @@ ggplot(preddat, aes(x = trt, y = inv.logit(fit))) +
   facet_grid(~block)
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 Given that 'block' was not significant, we can also make a simpler plot with just treatment.
 
@@ -551,6 +549,6 @@ ggplot(preddat, aes(x = trt, y = inv.logit(fit))) +
   labs(y = "Infection rate") 
 ```
 
-![](analysis_cam_dat_files/figure-markdown_github/unnamed-chunk-26-1.png)
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 **Conclusion**: There is a non-significant trend in the direction we would expect; crowding leads to lower infection probabilities. However, the trend is obscured by substantial variability from fish to fish. For example, unknown differences between the experimental blocks seem relevant. And there is overdispersion: more often than we would expect all the worms infect or none of them do.
