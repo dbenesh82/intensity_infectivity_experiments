@@ -1,4 +1,4 @@
-Analysis of Schisto double infections
+Crowding and Schistocephalus infection probability
 ================
 
 **Background**: these data are from an experiment in which stickleback fish were infected with a tapeworm. Fish were each given two tapeworm larvae via an intermediate host (a copepod). There were two treatments. Fish were either given two larvae in one copepod (the crowded treatment) or they were given two larvae in two copepods (one larvae per copepod, the uncrowded treatment). The goal of the experiment was to determine if crowding in the intermediate host affects a worm's chance of successfully infecting a fish.
@@ -11,8 +11,6 @@ library(dplyr)
 library(tidyr)
 library(boot)
 library(MuMIn)
-
-setwd("C:/Users/phosp/OneDrive/Documents/Benesh/Research/Intensity_infectivity/analysis/schistocephalus/")
 
 sdat <- read.csv(file = "Schisto_double_exposure.csv", header = TRUE, sep = ',')
 head(sdat)
@@ -72,7 +70,7 @@ sd_avg <- filter(sdat, !is.na(intensity))%>% #only select those with intensity d
 sd_avg 
 ```
 
-    ## # A tibble: 2 × 3
+    ## # A tibble: 2 x 3
     ##      trt     n  inf.rate
     ##   <fctr> <int>     <dbl>
     ## 1    1+1    27 0.3703704
@@ -105,7 +103,7 @@ importance(model.set)
     ## Importance:          1.00 1.00 1.00 0.47  0.25     0.23
     ## N containing models:   20   12   12    4    10       10
 
-Here's the plot of fish length vs infectivity. Larger fish had lower infection rates. This is either because small fish are more susceptible or because uninfected fish grow longer.
+Here's the plot of fish length vs infectivity. Larger fish had lower infection rates. Fish size was measured at dissection, so this pattern either reflects small fish being more susceptible or uninfected fish growing larger during the experiment.
 
 ``` r
 ggplot(data = sdat, aes(y = intensity/dose, x = tl, color = trt)) + 
@@ -113,7 +111,7 @@ ggplot(data = sdat, aes(y = intensity/dose, x = tl, color = trt)) +
   geom_smooth(method = 'lm') 
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-7-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
 
 Here's the same plot, but with fish weight.
 
@@ -123,7 +121,7 @@ ggplot(data = sdat, aes(y = intensity/dose, x = fw, color = trt)) +
   geom_smooth(method = 'lm') 
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
 It increases in heavier fish. This is probably caused by the fact that the fish weight variable also includes worm weight. Let's exclude fish weight, given that this pattern is not convincing and that there was missing data for this variable. The model still includes fish length, which is highly correlated with weight.
 
@@ -166,7 +164,7 @@ model.set
     ## 6 -0.7809   +           +       +  4 -59.460 127.7 14.56  0.000
     ## Models ranked by AICc(x)
 
-Interpreting this fish length effect is complicated though. Small fish may be more susceptible to *Schistocephalus* infection. Some of my previous studies found negative, but non-significant associations between fish weight at exposure and infectivity (see [here](http://onlinelibrary.wiley.com/doi/10.1111/j.1600-0706.2011.19925.x/full) and [here](http://onlinelibrary.wiley.com/doi/10.1111/evo.12388/full)). However, in this experiment the fish were measured at dissection and not at exposure, so it may simply be that uninfected fish grew longer than infected fish, causing the negative relationship. Also, fish were not dissected at the same time. Most fish were dissected around 100 days after exposure, but some died earlier and a few were dissected after ~170 days to have large worms for breeding.
+Interpreting this fish length effect is complicated though. Small fish may be more susceptible to *Schistocephalus* infection. Some of my previous studies found negative, but non-significant associations between fish weight at exposure and infectivity (see [here](http://onlinelibrary.wiley.com/doi/10.1111/j.1600-0706.2011.19925.x/full) and [here](http://onlinelibrary.wiley.com/doi/10.1111/evo.12388/full)). However, in this experiment the fish were measured at dissection and not at exposure, so it may simply be that uninfected fish grew more than infected fish, causing the negative relationship. Also, fish were not dissected at the same time. Most fish were dissected around 100 days after exposure, but some died earlier and a few were dissected after ~170 days to have large worms for breeding.
 
 Thus, fish length is a mixture of fish size at exposure, fish growth rate, and fish growth duration. We can at least look at the effect of fish size at a given age at dissection. We can define three age groups: 1) fish dissected about 3 months post exposure (the majority), 2) fish that died before the planned dissection date, and 3) a handful of fish that were dissected after about 5.5 months. When we plot infection rate vs length for these three groups, there is still a negative relationship for the main group ('most fish').
 
@@ -181,7 +179,7 @@ ggplot(data = mdat, aes(y = intensity/dose, x = tl, color = age_fac)) +
   geom_smooth(method = 'lm')
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
 
 And this negative relationship is significant when we fit a logistic regression with only the majority of fish dissected at about the same time. Treatment effects are still non-significant, though.
 
@@ -226,7 +224,7 @@ filter(mdat, age_fac == "most fish")%>%
   summarize(n = n(), mean_length = mean(tl, na.rm=T), std_dev_length = sd(tl, na.rm=T))
 ```
 
-    ## # A tibble: 2 × 4
+    ## # A tibble: 2 x 4
     ##      trt     n mean_length std_dev_length
     ##   <fctr> <int>       <dbl>          <dbl>
     ## 1    1+1    20    40.80000       2.483631
@@ -234,9 +232,9 @@ filter(mdat, age_fac == "most fish")%>%
 
 So fish size variables are difficult to interpret and have no impact on our main interest, treatment effects. Thus, we do not consider further models including fish size.
 
-Another approach to model-building is to think of appropriate models a priori and then compare them. Let's start with the simplest model, with only treatment.
+Another approach to model-building is to think of appropriate models *a priori* and then compare them. Let's start with the simplest model, with only treatment.
 
-*Model 1*: Just treatment
+**Model 1**: Just treatment
 
 ``` r
 mod1 <- glm(cbind(intensity, dose - intensity) ~ trt, data = sdat, family = 'binomial')
@@ -319,7 +317,7 @@ anova(mod1, test = 'F')
 
 The results are similar. Below we examine the distribution of the data and whether the binomial distribution fits the data well. But first we'll fit a couple more models. To be conservative we will use `family = 'quasibinomial'`
 
-*Model 2*: treatment plus fish variables (just sex, given concerns with fish length discussed above)
+**Model 2**: treatment plus fish variables (just sex, given concerns with fish length discussed above)
 
 ``` r
 mod2 <- glm(cbind(intensity, dose - intensity) ~ fsex + trt, data = sdat, family = 'quasibinomial')
@@ -336,7 +334,7 @@ anova(mod1, mod2, test = "LRT")
 
 This is not a significantly better model. Finally, we'll add one more term, worm family (there were two used in the experiment).
 
-*Model 3*: treatment, fish sex, worm family
+**Model 3**: treatment, fish sex, worm family
 
 ``` r
 mod3 <- glm(cbind(intensity, dose - intensity) ~ fsex + worm.fam + trt, data = sdat, family = 'quasibinomial')
@@ -353,7 +351,7 @@ anova(mod2, mod3, test = "LRT")
 
 This model is not an improvement, and treatment is still not significant (not shown). Thus, we can conclude that the treatment effect (or lack thereof) is not sensitive to model specifications.
 
-So I think two models can be justified. I prefer a simple model with just `trt`, but a larger model including several control variables (`trt + fsex + worm.fam`) is also reasonable. Neither suggests that crowding affected establishment probability.
+So I think two models can be justified. I prefer a simple model with just `trt`, but a larger model including several control variables `trt + fsex + worm.fam` is also reasonable. Neither suggests that crowding affected establishment probability.
 
 We noted some overdispersion in the logistic regression, so let's look at how well the binomial approximates the observed data distribution.
 
@@ -376,7 +374,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   theme_bw()
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-18-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
 
 It looks like a reasonable fit, which we can confirm using a chi-square test.
 
@@ -393,9 +391,9 @@ chisq.test(cont.table, p = expected, simulate.p.value = TRUE, B = 10000)
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table
-    ## X-squared = 2.283, df = NA, p-value = 0.3153
+    ## X-squared = 2.283, df = NA, p-value = 0.3174
 
-Even though this test is non-significant, it is worth looking at the distribution in each treatment separately. In the crowded treatment, worms are not independent from one another. They may be more likely to all succeed or all fail, which would cause divergence from the expectations under a binomial distribution. This seems to apply to our other experiment with *Camallanus* (see [here](https://github.com/dbenesh82/intensity_infectivity_experiments/blob/master/camallanus/analysis_cam_dat.md)). So let's plot the observed and expected distribution for each treatment separately.
+Even though this test is non-significant, it is worth looking at the distribution in each treatment separately. In the crowded treatment, worms are not independent from one another. They may be more likely to all succeed or all fail, which would cause divergence from the expectations under a binomial distribution. This seems to apply to our other experiment with *Camallanus* (see [here](../camallanus/analysis_cam_dat.md)). So let's plot the observed and expected distribution for each treatment separately.
 
 ``` r
 # get the expected binomial distribution, given the mean in each treatments
@@ -419,7 +417,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   facet_wrap(~trt) + theme_bw()
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-20-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
 
 For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently than expected. We can do chi-square tests to see if these differences are significant.
 
@@ -522,22 +520,22 @@ First make a plot comparing treatment groups.
 mod1.1 <- glm(cbind(intensity, dose - intensity) ~ trt - 1, data = sdat, family = 'quasibinomial')
 
 sd_avg <- get_ci_log_reg(mod1.1)
-sd_avg <- mutate(sd_avg, trt = factor(trt, labels = c("Uncrowded", "Crowded")))
+sd_avg <- mutate(sd_avg, trt = factor(trt, labels = c("One/Copepod", "Two/Copepod")))
 
-sdat <- mutate(sdat, trtf = factor(trt, labels = c("Uncrowded", "Crowded"))) # need this var for overlaying data on means
+sdat <- mutate(sdat, trtf = factor(trt, labels = c("One/Copepod", "Two/Copepod"))) # need this var for overlaying data on means
 
 ggplot(sd_avg, aes(x = trt, y = param)) +
   geom_dotplot(data = sdat, aes(y = intensity/dose, x = trtf),
                fill = 'red', alpha = 0.5,
                binaxis = 'y', stackdir = 'center') +
-  geom_point(size = 3) +
+  geom_point(size = 10, shape = "-") +
   geom_errorbar(aes(ymin = cil, ymax = ciu), width = 0.25) +
   labs(y = "Infection rate") +
   scale_y_continuous(limits = c(0,1)) + 
   scale_x_discrete(expand = c(0.25, 0))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-25-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
 
 The means (black points) are very similar in the two groups, but the red points show how the distribution of the data might be different in the two treatments.
 
@@ -557,9 +555,9 @@ preddat <- cbind(newdat, preddat)
 preddat <- mutate(preddat,
                   ciu = fit + 1.96 * se.fit,
                   cil = fit - 1.96 * se.fit,
-                  trt = factor(trt, labels = c("Uncrowded", "Crowded")))
+                  trt = factor(trt, labels = c("One/Copepod", "Two/Copepod")))
 
-sdat$trtf <- factor(sdat$trt, labels = c("Uncrowded", "Crowded"))
+sdat$trtf <- factor(sdat$trt, labels = c("One/Copepod", "Two/Copepod"))
 
 
 ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) + 
@@ -578,6 +576,6 @@ ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) +
         axis.text.x = element_text(colour="black", size = 12, face = "plain"))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github/unnamed-chunk-26-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
-**Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, it is possible that worms from crowded intermediate hosts are more likely to either both establish or neither establish. This needs further study.
+**Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, there is suggestive evidence that worms from crowded infection are more likely to either both establish or neither establish.

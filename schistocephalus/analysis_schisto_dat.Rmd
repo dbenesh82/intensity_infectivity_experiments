@@ -15,8 +15,6 @@ library(tidyr)
 library(boot)
 library(MuMIn)
 
-setwd("C:/Users/phosp/OneDrive/Documents/Benesh/Research/Intensity_infectivity/analysis/schistocephalus/")
-
 sdat <- read.csv(file = "Schisto_double_exposure.csv", header = TRUE, sep = ',')
 head(sdat)
 ```
