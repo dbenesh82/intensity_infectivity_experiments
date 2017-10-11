@@ -1,5 +1,5 @@
 ---
-title: "Effect of Camallanus infections"
+title: "Crowding and Camallanus infection probability"
 output: github_document
 ---
 
@@ -14,8 +14,6 @@ library(dplyr)
 library(tidyr)
 library(boot)
 library(MuMIn)
-
-setwd("C:/Users/phosp/OneDrive/Documents/Benesh/Research/Intensity_infectivity/analysis/camallanus/")
 
 cdat <- read.csv(file = "cam_fish_inf.csv", header = TRUE, sep = ',')
 head(cdat)
@@ -47,7 +45,7 @@ cd_avg <- group_by(cdat, trt)%>%
 cd_avg 
 ```
 
-Let's start fitting models. The response variable (infection) is a proportion, so we will run a logistic regression. To get an idea of which variables are important, we'll fit many models. All the models will include treatment, because that's what we want to test. But first we need to filter rows with missing values, so that the sample size is constant, regardless of the variables in the model.
+Let's start by fitting models. The response variable (infection) is a proportion, so we will run a logistic regression. To get an idea of which variables are important, we'll fit many models. All the models will include treatment, because that's what we want to test. But first we need to filter rows with missing values, so that the sample size is constant, regardless of the variables in the model.
 
 ```{r}
 mdat <- filter(cdat, !is.na(fsex)) # remove rows with missing fish sex data; sex was only variable with missing data
@@ -82,7 +80,7 @@ model.set <- dredge(global.mod, fixed = 'trt') # only include models with treatm
 importance(model.set)
 ```
 
-Total length and fish weight are less important now, so it seems like those 4 fish with missing sex values mattered. This is because these fish (blue below) tend to nullify a previously negative relationship (red line) between size and infection.
+Total length and fish weight are less important now, so it seems like those 4 fish with missing sex values mattered. This is because these fish (blue line below) tend to nullify a previously negative relationship (red line) between size and infection.
 
 ```{r}
 ggplot(data = cdat, aes(x = tl, y = intensity/dose, color = is.na(fsex))) + 
@@ -199,7 +197,7 @@ All are significant, and the deviance from the expected distribution (measured b
 chisq.test(cont.table, simulate.p.value = TRUE, B = 10000)
 ```
 
-It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, and deviation from this distribution increases with crowding. However, it would be premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
+It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, but it seems premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
 
 
 Returning to our modeling approach, in cases like this, where the data are more variable that expected based on the binomial, it is usual to use `'quasibinomial'` as the family argument. The model parameters are unchanged, but their standard errors are inflated in accordance with the amount of overdispersion. Thus, the significance tests are much more conservative.
@@ -211,9 +209,9 @@ anova(mod0, test = "F")
 
 Now there is no signifant effect of block, fish size, or treatment (treatment was significant before the adjustment for overdispersion).
 
-We came to this model through a brute force kind of approach (i.e. fitting many models). But we can also try to think of justifiable models a priori. Let's fit a couple for comparison.
+We came to this model through a brute force kind of approach (i.e. fitting many models). But we can also try to think of justifiable models *a priori*. Let's fit a couple for comparison.
 
-*Model 1*: only treatment. This assumes that the effects of other variables are randomized across the treatments and will thus not bias treatment effects. That is, there is no need to control for these effects.
+**Model 1**: only treatment. This assumes that the effects of other variables are randomized across the treatments and will thus not bias treatment effects. That is, there is no need to control for these effects.
 
 ```{r}
 mod1 <- glm(cbind(intensity, dose - intensity) ~ trt, data = cdat, family = 'quasibinomial')
@@ -222,16 +220,16 @@ anova(mod1, test = "F")
 
 The treatment effect is not significant. Let's add other variables we want to account for.
 
-*Model 2*: add block. The experimental block has no biological relevance, so it can be fit without much interest in the parameter estimates.
+**Model 2**: add block. The experimental block has no biological relevance, so it can be fit without much interest in the parameter estimates.
 
 ```{r}
 mod2 <- glm(cbind(intensity, dose - intensity) ~ block + trt, data = cdat, family = 'quasibinomial')
 anova(mod2, test = "F")
 ```
 
-There are not big differences between blocks, but controlling for it, affects how much deviance is explained by treatment. It is still not significant though.
+There are not big differences between blocks, but controlling for it affects how much deviance is explained by treatment. It is still not significant though.
 
-*Model 3*: only fish variables (except fish sex). The idea here is that we control for fish traits that might affect susceptibility to infection, like size and family background. Only include one measure of fish size (i.e. not both length and weight due to their strong correlation).
+**Model 3**: only fish variables (except fish sex). The idea here is that we control for fish traits that might affect susceptibility to infection, like size and family background. Only include one measure of fish size (i.e. not both length and weight due to their strong correlation).
 
 ```{r}
 mod3 <- glm(cbind(intensity, dose - intensity) ~ tl + ffam + trt, data = cdat, family = 'quasibinomial')
@@ -240,14 +238,14 @@ anova(mod3, test = "F")
 
 Neither fish length nor family appear very important, and they do not have as much of an impact on the treatment effect.
 
-*Model 4*: a model with both block and fish variables. With more model terms, overdispersion may decrease as more residual deviance is explained. However, even in this larger model the dispersion parameter is about 3 (i.e. it is still a problem).
+**Model 4**: a model with both block and fish variables. With more model terms, overdispersion may decrease as more residual deviance is explained. However, even in this larger model the dispersion parameter is about 3 (i.e. it is still a problem).
 
 ```{r}
 mod4 <- glm(cbind(intensity, dose - intensity) ~ block + tl + ffam + trt, data = cdat, family = 'quasibinomial')
 anova(mod4, test = "F")
 ```
 
-Treatment looks more important here, but it is still not significant. Is this larger model an improvement over the simplest model with just treatment? Let's compare the models with a likelihood ratio test.
+Treatment looks more important here, but it is still not significant. Is this larger model an improvement over the simplest model with just treatment? Let's compare them with a likelihood ratio test.
 
 ```{r}
 anova(mod1, mod4, test = "F") 
