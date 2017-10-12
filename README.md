@@ -2,4 +2,4 @@
 
 Many parasitic worms are trophically-transmitted. That is, they are transmitted when one host is eaten by the next host. It has often been shown that such worms experience 'crowding'; they are smaller when the host is infected by multiple worms. Whether crowding has consequences for worms has been less studied. I conducted experiments exploring this in two worm species, a nematode (*Camallanus lacustris*) and a cestode (*Schistocephalus solidus*). In both experiments, fish were infected with a constant dose of worms, but the worms were distributed differently in their copepod intermediate hosts. Some were from 'crowded' intermediate hosts and others were from 'uncrowded' hosts. This repository contains the data and analyses from these experiments, [here](camallanus/analysis_cam_dat.md) for *Camallanus* and [here](schistocephalus/analysis_schisto_dat.md) for *Schistocephalus*.
 
-![*Camallanus lacustris* larva](cam_pic/cam_pic.tif)
+![*Camallanus lacustris* larva](cam_pic/cam_pic.png)
