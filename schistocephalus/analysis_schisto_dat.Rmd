@@ -351,3 +351,32 @@ ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) +
 ```
 
 **Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, there is suggestive evidence that worms from crowded infection are more likely to either both establish or neither establish.
+
+Export figure for manuscript. Size and format have been specified for J. Helminthol.
+```{r}
+p <- ggplot(sd_avg, aes(x = trt, y = param)) +
+  geom_dotplot(data = sdat, aes(y = intensity/dose, x = trtf), 
+               fill = 'red', alpha = 0.75, dotsize = 1,
+               binaxis = 'y', stackdir = 'center') +
+  geom_point(size = 10, shape = "-") +
+  geom_errorbar(aes(ymin = cil, ymax = ciu), width = 0.25) +
+  labs(y = "Infection rate") +
+  scale_y_continuous(limits = c(0,1)) + 
+  theme(
+  axis.text.y = element_text(colour="black", size = 8),
+  axis.text.x = element_text(colour="black", size = 8),
+  axis.title.y = element_text(colour="black", size = 9, angle = 90),
+  axis.title.x = element_blank(),
+  axis.ticks = element_line(colour="black"),
+  panel.border = element_rect(colour = "black",fill=NA),
+  panel.grid.minor=element_blank(),
+  panel.grid.major.x=element_blank(),
+  panel.grid.major=element_line(color="gray",linetype = "dotted"),
+  panel.background= element_rect(fill = NA)
+  )
+
+p
+
+ggsave(plot = p, filename = "../figs/fig_schisto.tiff", dpi = 800, units = "mm", width = 80, height = 70)
+```
+
