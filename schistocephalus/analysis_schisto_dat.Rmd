@@ -488,3 +488,95 @@ Perhaps unsurprisingly, given the previous plots and the small sample sizes, the
 ```{r}
 summary(glm(tot_ww ~ tl + intensity + trt, data = sdat_size))
 ```
+
+Another reviewer comment concerned the marginal significance of differences in infection rate distributions in the crowded and uncrowded treatments. It seemed like there were more all-or-none infections in the crowded treatments, but the pattern was not significant. Let's explore how much more divergent the distributions would need to be to become significant at the sample sizes in our experiment. We will take the observed distribution of infections in the uncrowded group, and then diverge the distribution from this observed one. Here's the observed distribution of intensities in singly-infected copepods.
+
+```{r}
+obs1 <- filter(sdat, trt == "1+1", !is.na(fdead))%>%select(intensity)
+obs1 <- as.numeric(table(obs1$intensity)/length(obs1$intensity))
+obs1
+```
+
+Now we will slowly increase the proportion of zero and double infections, relative to single infections. Essentially, I am making the distribution more bimodal, which is what we expect if parasites sharing a copepod either all infect or all fail. The next chunck creates two plots demonstrating how I change the distribution from 'no difference' to 'large difference'. The means are kept constant, only the distribution is changing, which is what we observed when comparing crowded and uncrowded groups.
+
+```{r message=FALSE, warning=FALSE}
+move_from_middle <- c(0, 0.5) # percentage points to move from single to double and zero infections.
+
+for(m in move_from_middle) { 
+  hyp2 <- c(obs1[1] + m/2, obs1[2] - m, obs1[3] + m/2) # proportion in the intensities for doubly-infected cops
+  
+  # make data frame, including observed values and divergence from them
+  singles <- data.frame(intensity = 0:2, singly_infected = obs1)
+  doubles <- data.frame(intensity = 0:2, doubly_infected = hyp2)
+  d <- left_join(singles, doubles)
+  binom_exp <- gather(d, 'dist', 'freq', singly_infected:doubly_infected)
+  
+  # make plots
+  p <- paste0("powerplot", m, sep = "_")
+  ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) + 
+    geom_bar(stat = 'identity', position = position_dodge()) +
+    labs(y = 'frequency', fill = NULL) + guides(fill = FALSE) +
+    scale_y_continuous(limits = c(0, 0.65), breaks = seq(0,0.65,0.1)) +
+    theme_bw()
+  ggsave(filename = paste0("../figs/", p, ".png"), device = 'png', width = 5, height = 5)
+}
+```
+
+Now, we incrementally increase the difference between the distributions, perform a chi-square, and record the p-value to make a plot. The infection rate distribution for singly-infected copepods is that observed in the experiment and is kept constant, while the distribution for doubly-infected copepods is made more and more bimodal.
+
+```{r}
+trt1_d <- (filter(sdat, trt == "1+1", !is.na(fdead))%>%select(intensity))$intensity # observed dist for singly-infs
+make_bimodal <- seq(0, to = max(obs1), by = 0.05) # sequence to make more and more bimodal
+
+for(i in seq_along(make_bimodal)){
+  if(i == 1 & exists("out_dat")) {rm(out_dat)} # if out_dat exists on first iteration, delete it
+  
+  m <- make_bimodal[i]
+  hyp2 <- c(obs1[1] + m/2, obs1[2] - m, obs1[3] + m/2) # distribution for doubly-infecteds
+  
+  trt2_d <- round(hyp2 * 30, 0)
+  trt2_d <- rep(0:2, times = trt2_d) # hypothetical data for doubly-infecteds
+  
+  trt <- rep(c("One/Copepod", "Two/Copepod"), times = c(length(trt1_d), length(trt2_d)))
+  d_chi <- data.frame(trt = trt, intensity = c(trt1_d, trt2_d)) # data frame to make contingency table
+  
+  cont_table <- table(d_chi$trt, d_chi$intensity) # contingency table for chi-square
+  
+  x <- chisq.test(cont_table, simulate.p.value = TRUE, B = 1000)
+  out_row <- data.frame(conditionalness = m, p = x$p.value)
+  
+  if(i == 1){ # make output dataframe containing 'bimodalness' and p value
+    out_dat <- out_row
+  } else {
+    out_dat <- rbind(out_dat, out_row)
+  }
+} 
+```
+
+Now let's plot how p-values change as the distributions diverge and the 'crowded' distribution gets more bimodal. The bimodalness of the infection was 0.28, i.e. for crowded infections there was 28 fewer percentage points in the single intensity group than expected. This was on the borderline of significance.
+
+```{r message=FALSE, warning=FALSE}
+p <- ggplot(out_dat, aes(x = conditionalness, y = p)) +
+  geom_point() +
+  labs(x = "Divergence from singly-infecteds\n'Bimodalness'",
+       y = "Chi-square p-value") +
+  geom_smooth(se = F, linetype = "dashed", color = "darkgray") + 
+  theme_bw()
+p
+```
+
+Here's the same plot, but with histograms as insets to show how the distribution becomes more bimodal at the differenct extremes of the x-axis.
+
+```{r message=FALSE, warning=FALSE}
+library(magick)
+library(grid)
+img <- image_read(path = "../figs/powerplot0_.png")
+img <- image_border(img, color = "black")
+
+img2 <- image_read(path = "../figs/powerplot0.5_.png")
+img2 <- image_border(img2, color = "black")
+
+p + annotation_custom(rasterGrob(img), xmin = 0, xmax = 0.15, ymin = 0.025, ymax = 0.55) +
+  annotation_custom(rasterGrob(img2), xmin = 0.35, xmax = 0.5, ymin = 0.025, ymax = 0.55)
+```
+
