@@ -355,3 +355,27 @@ p
 
 ggsave(plot = p, filename = "../figs/fig_cam.tiff", dpi = 800, units = "mm", width = 80, height = 70)
 ```
+
+**Revisions**
+
+After peer-review, a couple issues were raised. First, a reviewer asked how reliable the intensity measurements are. That is, when we count one worm in a copepod, how certain are we that there is only one worm in the copepod? Mistakes happen, and usually intensities are underestimated because a worm is overlooked. Presumably this happens in all treatments, but maybe it is more common in the crowded treatment, if two worms in a single copepod are hard to distinguish from one another. 
+Let's take an extreme hypothetical, and assume that every 3rd doubly-infected copepod actually had an extra worm and every 2nd triply-infected copepod had one. The actual error rate has not been measured, it is almost surely lower than 30-50%. In this extreme example, each fish exposed in the double- and triple-infection groups would have received 7 instead of 6 worms, and accordingly the infection rates in these treatments drops by 5 to 7%.
+
+```{r}
+cdat$dose2 <- cdat$dose
+cdat$dose2[which(cdat$trtf == "Three/Copepod" | cdat$trtf == "Two/Copepod")] <- 7
+
+cd_avg_hyp <- group_by(cdat, trt)%>%
+  summarize(n = n(), tdose = sum(dose2, na.rm=T), tint = sum(intensity, na.rm=T))%>%
+  mutate(inf.rate = tint/tdose)%>%
+  select(trt, n, inf.rate)
+cd_avg_hyp
+```
+
+However, this decrease is still not sufficient to be considered statistically significant in the logistic regression model (p = 0.23). Partly, this is due to overdispersion which inflates standard errors. The increased dose and decreased infection rates do not change the fact that the data do not follow a binomial error distribution.
+
+```{r}
+mod_hyp <- glm(cbind(intensity, dose2 - intensity) ~ trt, data = cdat, family = 'quasibinomial')
+anova(mod_hyp, test = "F")
+```
+

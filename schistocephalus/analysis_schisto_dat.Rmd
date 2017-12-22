@@ -359,7 +359,7 @@ ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) +
 **Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, there is suggestive evidence that worms from crowded infection are more likely to either both establish or neither establish.
 
 Export figure for manuscript. Size and format have been specified for J. Helminthol.
-```{r}
+```{r message=FALSE, warning=FALSE}
 p <- ggplot(sd_avg, aes(x = trt, y = param)) +
   geom_dotplot(data = sdat, aes(y = intensity/dose, x = trtf), 
                fill = 'red', alpha = 0.75, dotsize = 1,
@@ -386,5 +386,105 @@ p
 ggsave(plot = p, filename = "../figs/fig_schisto.tiff", dpi = 800, units = "mm", width = 80, height = 70)
 ```
 
+**Revisions**
 
+After peer-review, a couple issues were raised. First, a reviewer asked how reliable the intensity measurements are. That is, when we count one worm in a copepod, how certain are we that there is only one worm in the copepod? Mistakes happen, and usually intensities are underestimated because a worm is overlooked. Presumably this happens in all treatments, but maybe it is more common in the crowded treatment, if two worms in a single copepod are hard to distinguish from one another. Let's take an extreme hypothetical, where in every doubly-infected copepod, there was an extra worm lurking unobserved, such that fish were exposed to three instead of two worms. In this case, the infection rate is obviously lower in the crowded treatment, decreasing from 35 to 23%.
 
+```{r}
+sdat$dose2 <- sdat$dose
+sdat$dose2[which(sdat$trtf == "Two/Copepod")] <- 3
+
+sd_avg_hyp <- filter(sdat, !is.na(intensity))%>% #only select those with intensity data (one fish with missing data)
+  group_by(trt)%>%
+  summarize(n = n(), tdose = sum(dose2, na.rm=T), tint = sum(intensity, na.rm=T))%>%
+  mutate(inf.rate = tint/tdose)%>%
+  select(trt, n, inf.rate)
+sd_avg_hyp
+```
+
+However, this decrease is still not sufficient to be considered statistically significant in the logistic regression model, though it is getting close at p = 0.1.
+
+```{r}
+mod_hyp <- glm(cbind(intensity, dose2 - intensity) ~ trt, data = sdat, family = 'quasibinomial')
+summary(mod_hyp)
+```
+
+Intensity errors like this lower mean infection rates, but the hour-glass like shape of the distribution is not changed. It is just compressed towards lower values.
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+sd_avg_hyp <- get_ci_log_reg(
+  glm(cbind(intensity, dose2 - intensity) ~ trt - 1, data = sdat, family = 'quasibinomial')
+  )
+
+sd_avg_hyp <- mutate(sd_avg_hyp, trt = factor(trt, labels = c("One/Copepod", "Two/Copepod")))
+
+p <- ggplot(sd_avg_hyp, aes(x = trt, y = param)) +
+  geom_dotplot(data = sdat, aes(y = intensity/dose2, x = trtf), 
+               fill = 'red', alpha = 0.75, dotsize = 1,
+               binaxis = 'y', stackdir = 'center') +
+  geom_point(size = 10, shape = "-") +
+  geom_errorbar(aes(ymin = cil, ymax = ciu), width = 0.25) +
+  labs(y = "Infection rate") +
+  ggtitle("Hypothetical errors in intensity measurements (extreme case)") +
+  scale_y_continuous(limits = c(0,1)) + 
+  theme(
+  axis.text.y = element_text(colour="black", size = 8),
+  axis.text.x = element_text(colour="black", size = 8),
+  axis.title.y = element_text(colour="black", size = 9, angle = 90),
+  axis.title.x = element_blank(),
+  axis.ticks = element_line(colour="black"),
+  panel.border = element_rect(colour = "black",fill=NA),
+  panel.grid.minor=element_blank(),
+  panel.grid.major.x=element_blank(),
+  panel.grid.major=element_line(color="gray",linetype = "dotted"),
+  panel.background= element_rect(fill = NA)
+  )
+p
+```
+
+A reviewer also suggested that crowding may have subtler, longer-term effects. In the case of *S.solidus*, we can examine whether worm size at dissection depends on crowding treatment. To do so, we need to re-import the data and retain worm size in the data table.
+
+```{r, message=TRUE, warning=TRUE}
+sdat <- read.csv(file = "Schisto_double_exposure.csv", header = TRUE, sep = ',')
+names(sdat)
+
+sdat <- select(sdat, worm.fam = Clutch, trt = Treatment, tl = Total.Length, fw = Fish.weight, 
+               age_diss = Age_at_diss1, fsex = Sex, fdead = Dead, intensity = Inf.,
+               Worm1, Worm2)%>%
+  mutate(tot_ww = if_else(is.na(Worm2), Worm1, Worm1 + Worm2))
+```
+
+We'll focus on the total weight of the worms in a fish. Worm weight is affected by fish size and age at dissection. To make apples-apples comparisons, let's take the largest subset of comparable fish: those that survived and were dissected at the main time point (~100 dpi).
+
+```{r}
+# take just infected fish, dissected at main time point
+sdat_size <- filter(sdat, fdead != 1, age_diss < 150, !is.na(tot_ww))
+```
+
+This leaves just `r length(sdat_size$intensity)` fish to compare. Moreover, these fish need to be split by infection intensity, as worm weight may differ between fish with one or two worms. As can be seen on the boxplot below, this leaves very few fish in each group (from 2 to 7). There is no clear trend for worms from doubly-infected copepods to be smaller than those from singly-infected copepods.
+
+```{r}
+sdat_size$fint <- factor(sdat_size$intensity, labels = c("One Worm/Fish", "Two Worms/Fish"))
+ggplot(sdat_size, aes(x = trt, y = tot_ww)) + 
+  geom_boxplot() +
+  geom_jitter() +
+  labs(x = "Intensity in copepods", y = "Worm weight") +
+  facet_grid(~fint) +
+  theme(axis.title.x = element_text())
+```
+
+We should account for another covariate: fish size. Worms are bigger in bigger fish, as can be seen in the next plot. However, it does not look like worms from doubly-infected copepods tend to be smaller than expected, given their host's size and the intensity of infection.
+
+```{r}
+ggplot(sdat_size, aes(x = tl, y = tot_ww, color = trt)) + 
+  geom_point() +
+  labs(x = "Fish length", y = "Worm weight", color = "Intensity in copepods") +
+  facet_grid(~fint) +
+  theme(axis.title.x = element_text())
+```
+
+Perhaps unsurprisingly, given the previous plots and the small sample sizes, there is not a significant effect of treatment in a glm with fish length and fish infection intensity.
+
+```{r}
+summary(glm(tot_ww ~ tl + intensity + trt, data = sdat_size))
+```
