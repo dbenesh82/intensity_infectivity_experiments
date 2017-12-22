@@ -33,7 +33,13 @@ Look at which variables have missing data.
 sapply(sdat, function(x) sum(is.na(x))) # missing values in each variable
 ```
 
-One exposed fish was lost and thus has empty values for 'fdead' and 'intensity'. It can be excluded. Beware of using fish weight in models, as it is missing for 10 fish. These fish died before dissections, but months after exposure, so their worms would not have been too small to be overlooked.
+One exposed fish was lost and thus has empty values for 'fdead' and 'intensity'. It can be excluded. Beware of using fish weight in models, as it is missing for 10 fish. These fish died before dissections, but months after exposure, so their worms would not have been too small to be overlooked. In fact, all 11 fish that died during the experiment were infected. This is more than expected by chance which suggests parasite-induced mortality.
+
+```{r}
+d_tab <- table(sdat$fdead, sdat$intensity)
+d_tab
+chisq.test(d_tab)
+```
 
 Calculate infection rates for the two treatments.
 
@@ -379,4 +385,6 @@ p
 
 ggsave(plot = p, filename = "../figs/fig_schisto.tiff", dpi = 800, units = "mm", width = 80, height = 70)
 ```
+
+
 
