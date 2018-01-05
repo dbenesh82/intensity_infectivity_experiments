@@ -57,7 +57,29 @@ sapply(sdat, function(x) sum(is.na(x))) # missing values in each variable
     ## intensity      dose 
     ##         1         0
 
-One exposed fish was lost and thus has empty values for 'fdead' and 'intensity'. It can be excluded. Beware of using fish weight in models, as it is missing for 10 fish. These fish died before dissections, but months after exposure, so their worms would not have been too small to be overlooked.
+One exposed fish was lost and thus has empty values for 'fdead' and 'intensity'. It can be excluded. Beware of using fish weight in models, as it is missing for 10 fish. These fish died before dissections, but months after exposure, so their worms would not have been too small to be overlooked. In fact, all 11 fish that died during the experiment were infected. This is more than expected by chance which suggests parasite-induced mortality.
+
+``` r
+d_tab <- table(sdat$fdead, sdat$intensity)
+d_tab
+```
+
+    ##    
+    ##      0  1  2
+    ##   0 26 14  6
+    ##   1  0  7  4
+
+``` r
+chisq.test(d_tab)
+```
+
+    ## Warning in chisq.test(d_tab): Chi-squared approximation may be incorrect
+
+    ## 
+    ##  Pearson's Chi-squared test
+    ## 
+    ## data:  d_tab
+    ## X-squared = 11.625, df = 2, p-value = 0.00299
 
 Calculate infection rates for the two treatments.
 
@@ -111,7 +133,7 @@ ggplot(data = sdat, aes(y = intensity/dose, x = tl, color = trt)) +
   geom_smooth(method = 'lm') 
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-7-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
 
 Here's the same plot, but with fish weight.
 
@@ -121,7 +143,7 @@ ggplot(data = sdat, aes(y = intensity/dose, x = fw, color = trt)) +
   geom_smooth(method = 'lm') 
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-8-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-9-1.png)
 
 It increases in heavier fish. This is probably caused by the fact that the fish weight variable also includes worm weight. Let's exclude fish weight, given that this pattern is not convincing and that there was missing data for this variable. The model still includes fish length, which is highly correlated with weight.
 
@@ -179,7 +201,7 @@ ggplot(data = mdat, aes(y = intensity/dose, x = tl, color = age_fac)) +
   geom_smooth(method = 'lm')
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-11-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-12-1.png)
 
 And this negative relationship is significant when we fit a logistic regression with only the majority of fish dissected at about the same time. Treatment effects are still non-significant, though.
 
@@ -374,7 +396,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   theme_bw()
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-18-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-19-1.png)
 
 It looks like a reasonable fit, which we can confirm using a chi-square test.
 
@@ -391,7 +413,7 @@ chisq.test(cont.table, p = expected, simulate.p.value = TRUE, B = 10000)
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table
-    ## X-squared = 2.283, df = NA, p-value = 0.3174
+    ## X-squared = 2.283, df = NA, p-value = 0.321
 
 Even though this test is non-significant, it is worth looking at the distribution in each treatment separately. In the crowded treatment, worms are not independent from one another. They may be more likely to all succeed or all fail, which would cause divergence from the expectations under a binomial distribution. This seems to apply to our other experiment with *Camallanus* (see [here](../camallanus/analysis_cam_dat.md)). So let's plot the observed and expected distribution for each treatment separately.
 
@@ -417,7 +439,7 @@ ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) +
   facet_wrap(~trt) + theme_bw()
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-20-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-21-1.png)
 
 For single infections (uncrowded treatment) it fits quite well. But for fish exposed to doubly-infected copepods, we see more null and double infections than expected. This suggests that when worms share a copepod host, their chance to infect is not independent. That is, both infect or both fail to infect more frequently than expected. We can do chi-square tests to see if these differences are significant.
 
@@ -535,7 +557,7 @@ ggplot(sd_avg, aes(x = trt, y = param)) +
   scale_x_discrete(expand = c(0.25, 0))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-25-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 The means (black points) are very similar in the two groups, but the red points show how the distribution of the data might be different in the two treatments.
 
@@ -576,6 +598,278 @@ ggplot(sdat, aes(x = tl, y = intensity/dose, color = trtf)) +
         axis.text.x = element_text(colour="black", size = 12, face = "plain"))
 ```
 
-![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png)
 
 **Conclusion**: There is little support for the hypothesis that crowding reduces the infection rate of these worms. However, there is suggestive evidence that worms from crowded infection are more likely to either both establish or neither establish.
+
+Export figure for manuscript. Size and format have been specified for J. Helminthol.
+
+``` r
+p <- ggplot(sd_avg, aes(x = trt, y = param)) +
+  geom_dotplot(data = sdat, aes(y = intensity/dose, x = trtf), 
+               fill = 'red', alpha = 0.75, dotsize = 1,
+               binaxis = 'y', stackdir = 'center') +
+  geom_point(size = 10, shape = "-") +
+  geom_errorbar(aes(ymin = cil, ymax = ciu), width = 0.25) +
+  labs(y = "Infection rate") +
+  scale_y_continuous(limits = c(0,1)) + 
+  theme(
+  axis.text.y = element_text(colour="black", size = 8),
+  axis.text.x = element_text(colour="black", size = 8),
+  axis.title.y = element_text(colour="black", size = 9, angle = 90),
+  axis.title.x = element_blank(),
+  axis.ticks = element_line(colour="black"),
+  panel.border = element_rect(colour = "black",fill=NA),
+  panel.grid.minor=element_blank(),
+  panel.grid.major.x=element_blank(),
+  panel.grid.major=element_line(color="gray",linetype = "dotted"),
+  panel.background= element_rect(fill = NA)
+  )
+
+p
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-28-1.png)
+
+``` r
+ggsave(plot = p, filename = "../figs/fig_schisto.tiff", dpi = 800, units = "mm", width = 80, height = 70)
+```
+
+**Revisions**
+
+After peer-review, a couple issues were raised. First, a reviewer asked how reliable the intensity measurements are. That is, when we count one worm in a copepod, how certain are we that there is only one worm in the copepod? Mistakes happen, and usually intensities are underestimated because a worm is overlooked. Presumably this happens in all treatments, but maybe it is more common in the crowded treatment, if two worms in a single copepod are hard to distinguish from one another. Let's take an extreme hypothetical, where in every doubly-infected copepod, there was an extra worm lurking unobserved, such that fish were exposed to three instead of two worms. In this case, the infection rate is obviously lower in the crowded treatment, decreasing from 35 to 23%.
+
+``` r
+sdat$dose2 <- sdat$dose
+sdat$dose2[which(sdat$trtf == "Two/Copepod")] <- 3
+
+sd_avg_hyp <- filter(sdat, !is.na(intensity))%>% #only select those with intensity data (one fish with missing data)
+  group_by(trt)%>%
+  summarize(n = n(), tdose = sum(dose2, na.rm=T), tint = sum(intensity, na.rm=T))%>%
+  mutate(inf.rate = tint/tdose)%>%
+  select(trt, n, inf.rate)
+sd_avg_hyp
+```
+
+    ## # A tibble: 2 x 3
+    ##      trt     n  inf.rate
+    ##   <fctr> <int>     <dbl>
+    ## 1    1+1    27 0.3703704
+    ## 2    2+0    30 0.2333333
+
+However, this decrease is still not sufficient to be considered statistically significant in the logistic regression model, though it is getting close at p = 0.1.
+
+``` r
+mod_hyp <- glm(cbind(intensity, dose2 - intensity) ~ trt, data = sdat, family = 'quasibinomial')
+summary(mod_hyp)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = cbind(intensity, dose2 - intensity) ~ trt, family = "quasibinomial", 
+    ##     data = sdat)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -1.3603  -1.2626   0.3730   0.3928   1.9932  
+    ## 
+    ## Coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)  
+    ## (Intercept)  -0.5306     0.2987  -1.776   0.0812 .
+    ## trt2+0       -0.6590     0.3988  -1.652   0.1042  
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for quasibinomial family taken to be 1.123791)
+    ## 
+    ##     Null deviance: 79.756  on 56  degrees of freedom
+    ## Residual deviance: 76.694  on 55  degrees of freedom
+    ##   (1 observation deleted due to missingness)
+    ## AIC: NA
+    ## 
+    ## Number of Fisher Scoring iterations: 4
+
+Intensity errors like this lower mean infection rates, but the hour-glass like shape of the distribution is not changed. It is just compressed towards lower values.
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-31-1.png)
+
+A reviewer also suggested that crowding may have subtler, longer-term effects. In the case of *S.solidus*, we can examine whether worm size at dissection depends on crowding treatment. To do so, we need to re-import the data and retain worm size in the data table.
+
+``` r
+sdat <- read.csv(file = "Schisto_double_exposure.csv", header = TRUE, sep = ',')
+names(sdat)
+```
+
+    ##  [1] "Fish_no"        "Clutch"         "Treatment"      "Total.Length"  
+    ##  [5] "Std.Length"     "Fish.weight"    "Inf."           "Sex"           
+    ##  [9] "Worm1"          "Worm2"          "Dead"           "Dissected"     
+    ## [13] "Early.exposure" "Later.exposure" "Age_at_diss1"   "Age_at_diss2"  
+    ## [17] "Remark"
+
+``` r
+sdat <- select(sdat, worm.fam = Clutch, trt = Treatment, tl = Total.Length, fw = Fish.weight, 
+               age_diss = Age_at_diss1, fsex = Sex, fdead = Dead, intensity = Inf.,
+               Worm1, Worm2)%>%
+  mutate(tot_ww = if_else(is.na(Worm2), Worm1, Worm1 + Worm2))
+```
+
+We'll focus on the total weight of the worms in a fish. Worm weight is affected by fish size and age at dissection. To make apples-apples comparisons, let's take the largest subset of comparable fish: those that survived and were dissected at the main time point (~100 dpi).
+
+``` r
+# take just infected fish, dissected at main time point
+sdat_size <- filter(sdat, fdead != 1, age_diss < 150, !is.na(tot_ww))
+```
+
+This leaves just 16 fish to compare. Moreover, these fish need to be split by infection intensity, as worm weight may differ between fish with one or two worms. As can be seen on the boxplot below, this leaves very few fish in each group (from 2 to 7). There is no clear trend for worms from doubly-infected copepods to be smaller than those from singly-infected copepods.
+
+``` r
+sdat_size$fint <- factor(sdat_size$intensity, labels = c("One Worm/Fish", "Two Worms/Fish"))
+ggplot(sdat_size, aes(x = trt, y = tot_ww)) + 
+  geom_boxplot() +
+  geom_jitter() +
+  labs(x = "Intensity in copepods", y = "Worm weight") +
+  facet_grid(~fint) +
+  theme(axis.title.x = element_text())
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-34-1.png)
+
+We should account for another covariate: fish size. Worms are bigger in bigger fish, as can be seen in the next plot. However, it does not look like worms from doubly-infected copepods tend to be smaller than expected, given their host's size and the intensity of infection.
+
+``` r
+ggplot(sdat_size, aes(x = tl, y = tot_ww, color = trt)) + 
+  geom_point() +
+  labs(x = "Fish length", y = "Worm weight", color = "Intensity in copepods") +
+  facet_grid(~fint) +
+  theme(axis.title.x = element_text())
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-35-1.png)
+
+Perhaps unsurprisingly, given the previous plots and the small sample sizes, there is not a significant effect of treatment in a glm with fish length and fish infection intensity.
+
+``` r
+summary(glm(tot_ww ~ tl + intensity + trt, data = sdat_size))
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = tot_ww ~ tl + intensity + trt, data = sdat_size)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -35.147   -7.993    3.224   10.065   25.111  
+    ## 
+    ## Coefficients:
+    ##             Estimate Std. Error t value Pr(>|t|)   
+    ## (Intercept) -240.117     89.665  -2.678  0.02011 * 
+    ## tl             9.271      2.156   4.300  0.00103 **
+    ## intensity     10.772     10.730   1.004  0.33525   
+    ## trt2+0        -6.052     10.259  -0.590  0.56618   
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for gaussian family taken to be 359.9364)
+    ## 
+    ##     Null deviance: 11010.2  on 15  degrees of freedom
+    ## Residual deviance:  4319.2  on 12  degrees of freedom
+    ## AIC: 144.98
+    ## 
+    ## Number of Fisher Scoring iterations: 2
+
+Another reviewer comment concerned the marginal significance of differences in infection rate distributions in the crowded and uncrowded treatments. It seemed like there were more all-or-none infections in the crowded treatments, but the pattern was not significant. Let's explore how much more divergent the distributions would need to be to become significant at the sample sizes in our experiment. We will take the observed distribution of infections in the uncrowded group, and then diverge the distribution from this observed one. Here's the observed distribution of intensities in singly-infected copepods.
+
+``` r
+obs1 <- filter(sdat, trt == "1+1", !is.na(fdead))%>%select(intensity)
+obs1 <- as.numeric(table(obs1$intensity)/length(obs1$intensity))
+obs1
+```
+
+    ## [1] 0.3703704 0.5185185 0.1111111
+
+Now we will slowly increase the proportion of zero and double infections, relative to single infections. Essentially, I am making the distribution more bimodal, which is what we expect if parasites sharing a copepod either all infect or all fail. The next chunk creates two plots demonstrating how I change the distribution from 'no difference' to 'large difference'. The means are kept constant, only the distribution is changing, which is what we observed when comparing crowded and uncrowded groups.
+
+``` r
+move_from_middle <- c(0, 0.5) # percentage points to move from single to double and zero infections.
+
+for(m in move_from_middle) { 
+  hyp2 <- c(obs1[1] + m/2, obs1[2] - m, obs1[3] + m/2) # proportion in the intensities for doubly-infected cops
+  
+  # make data frame, including observed values and divergence from them
+  singles <- data.frame(intensity = 0:2, singly_infected = obs1)
+  doubles <- data.frame(intensity = 0:2, doubly_infected = hyp2)
+  d <- left_join(singles, doubles)
+  binom_exp <- gather(d, 'dist', 'freq', singly_infected:doubly_infected)
+  
+  # make plots
+  p <- paste0("powerplot", m, sep = "_")
+  ggplot(binom_exp, aes(x = intensity, y = freq, fill = dist)) + 
+    geom_bar(stat = 'identity', position = position_dodge()) +
+    labs(y = 'frequency', fill = NULL) + guides(fill = FALSE) +
+    scale_y_continuous(limits = c(0, 0.65), breaks = seq(0,0.65,0.1)) +
+    theme_bw()
+  ggsave(filename = paste0("../figs/", p, ".png"), device = 'png', width = 5, height = 5)
+}
+```
+
+Now, we incrementally increase the difference between the distributions, perform a chi-square, and record the p-value to make a plot. The infection rate distribution for singly-infected copepods is that observed in the experiment and is kept constant, while the distribution for doubly-infected copepods is made more and more bimodal.
+
+``` r
+trt1_d <- (filter(sdat, trt == "1+1", !is.na(fdead))%>%select(intensity))$intensity # observed dist for singly-infs
+make_bimodal <- seq(0, to = max(obs1), by = 0.05) # sequence to make more and more bimodal
+
+for(i in seq_along(make_bimodal)){
+  if(i == 1 & exists("out_dat")) {rm(out_dat)} # if out_dat exists on first iteration, delete it
+  
+  m <- make_bimodal[i]
+  hyp2 <- c(obs1[1] + m/2, obs1[2] - m, obs1[3] + m/2) # distribution for doubly-infecteds
+  
+  trt2_d <- round(hyp2 * 30, 0)
+  trt2_d <- rep(0:2, times = trt2_d) # hypothetical data for doubly-infecteds
+  
+  trt <- rep(c("One/Copepod", "Two/Copepod"), times = c(length(trt1_d), length(trt2_d)))
+  d_chi <- data.frame(trt = trt, intensity = c(trt1_d, trt2_d)) # data frame to make contingency table
+  
+  cont_table <- table(d_chi$trt, d_chi$intensity) # contingency table for chi-square
+  
+  x <- chisq.test(cont_table, simulate.p.value = TRUE, B = 1000)
+  out_row <- data.frame(conditionalness = m, p = x$p.value)
+  
+  if(i == 1){ # make output dataframe containing 'bimodalness' and p value
+    out_dat <- out_row
+  } else {
+    out_dat <- rbind(out_dat, out_row)
+  }
+} 
+```
+
+Now let's plot how p-values change as the distributions diverge and the 'crowded' distribution gets more bimodal. The bimodalness of the infection was 0.28, i.e. for crowded infections there was 28 fewer percentage points in the single intensity group than expected. This was on the borderline of significance.
+
+``` r
+p <- ggplot(out_dat, aes(x = conditionalness, y = p)) +
+  geom_point() +
+  labs(x = "Divergence from singly-infecteds\n'Bimodalness'",
+       y = "Chi-square p-value") +
+  geom_smooth(se = F, linetype = "dashed", color = "darkgray") + 
+  theme_bw()
+p
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-40-1.png)
+
+Here's the same plot, but with histograms as insets to show how the distribution becomes more bimodal at the differenct extremes of the x-axis. This shows how a slightly more bimodal pattern in the doubly-infected treatment would have produced a signficant difference.
+
+``` r
+library(magick)
+library(grid)
+img <- image_read(path = "../figs/powerplot0_.png")
+img <- image_border(img, color = "black")
+
+img2 <- image_read(path = "../figs/powerplot0.5_.png")
+img2 <- image_border(img2, color = "black")
+
+p + annotation_custom(rasterGrob(img), xmin = 0, xmax = 0.15, ymin = 0.025, ymax = 0.55) +
+  annotation_custom(rasterGrob(img2), xmin = 0.35, xmax = 0.5, ymin = 0.025, ymax = 0.55)
+```
+
+![](analysis_schisto_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-41-1.png)

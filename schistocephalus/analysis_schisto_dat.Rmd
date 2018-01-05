@@ -497,7 +497,7 @@ obs1 <- as.numeric(table(obs1$intensity)/length(obs1$intensity))
 obs1
 ```
 
-Now we will slowly increase the proportion of zero and double infections, relative to single infections. Essentially, I am making the distribution more bimodal, which is what we expect if parasites sharing a copepod either all infect or all fail. The next chunck creates two plots demonstrating how I change the distribution from 'no difference' to 'large difference'. The means are kept constant, only the distribution is changing, which is what we observed when comparing crowded and uncrowded groups.
+Now we will slowly increase the proportion of zero and double infections, relative to single infections. Essentially, I am making the distribution more bimodal, which is what we expect if parasites sharing a copepod either all infect or all fail. The next chunk creates two plots demonstrating how I change the distribution from 'no difference' to 'large difference'. The means are kept constant, only the distribution is changing, which is what we observed when comparing crowded and uncrowded groups.
 
 ```{r message=FALSE, warning=FALSE}
 move_from_middle <- c(0, 0.5) # percentage points to move from single to double and zero infections.
@@ -565,7 +565,7 @@ p <- ggplot(out_dat, aes(x = conditionalness, y = p)) +
 p
 ```
 
-Here's the same plot, but with histograms as insets to show how the distribution becomes more bimodal at the differenct extremes of the x-axis.
+Here's the same plot, but with histograms as insets to show how the distribution becomes more bimodal at the differenct extremes of the x-axis. This shows how a slightly more bimodal pattern in the doubly-infected treatment would have produced a signficant difference.
 
 ```{r message=FALSE, warning=FALSE}
 library(magick)

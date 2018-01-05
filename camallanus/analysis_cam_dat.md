@@ -290,7 +290,7 @@ chisq.test(x = cont.table[1,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[1, ]
-    ## X-squared = 18.753, df = NA, p-value = 0.0442
+    ## X-squared = 18.753, df = NA, p-value = 0.0411
 
 ``` r
 # test if the observed and expected distributions differ for the two per copepod treatment
@@ -304,7 +304,7 @@ chisq.test(x = cont.table[2,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[2, ]
-    ## X-squared = 22.839, df = NA, p-value = 0.0135
+    ## X-squared = 22.839, df = NA, p-value = 0.013
 
 ``` r
 # test if the observed and expected distributions differ for the three per copepod treatment
@@ -318,7 +318,7 @@ chisq.test(x = cont.table[3,],
     ##  (based on 10000 replicates)
     ## 
     ## data:  cont.table[3, ]
-    ## X-squared = 113.28, df = NA, p-value = 2e-04
+    ## X-squared = 113.28, df = NA, p-value = 9.999e-05
 
 ``` r
 # using the option to get a p-value by Monte Carlo simulation is needed given small sample sizes
@@ -335,7 +335,7 @@ chisq.test(cont.table, simulate.p.value = TRUE, B = 10000)
     ##  replicates)
     ## 
     ## data:  cont.table
-    ## X-squared = 10.813, df = NA, p-value = 0.5988
+    ## X-squared = 10.813, df = NA, p-value = 0.6045
 
 It is non-significant. Thus, we are confident that the infection process does not resemble a binomial distribution, but it seems premature to conclude that the distribution of infection differs among treatments. This is a reminder that these frequencies are based on small sample sizes and tests of differences are not that powerful. Also, this tests for differences between groups, not for a trend from low to high crowding.
 
@@ -552,3 +552,81 @@ ggplot(preddat, aes(x = trt, y = inv.logit(fit))) +
 ![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-26-1.png)
 
 **Conclusion**: There is a non-significant trend in the direction we would expect; crowding leads to lower infection probabilities. However, the trend is obscured by substantial variability from fish to fish. For example, unknown differences between the experimental blocks seem relevant. And there is overdispersion: more often than we would expect all the worms infect or none of them do.
+
+Export figure for manuscript. Size and format have been specified for J. Helminthol.
+
+``` r
+p <- ggplot(preddat, aes(x = trt, y = inv.logit(fit))) + 
+  geom_dotplot(data = cdat, aes(y = intensity/dose, x = trtf), 
+               fill = 'red', alpha = 0.75, dotsize = 1,
+               binaxis = 'y', stackdir = 'center') +
+  geom_point(size = 10, shape = "-") +
+  geom_errorbar(aes(ymin = inv.logit(cil), ymax = inv.logit(ciu)), width = 0.25) +
+  labs(y = "Infection rate") +
+  scale_y_continuous(limits = c(0,1)) + 
+  theme(
+  axis.text.y = element_text(colour="black", size = 8),
+  axis.text.x = element_text(colour="black", size = 7),
+  axis.title.y = element_text(colour="black", size = 9, angle = 90),
+  axis.title.x = element_blank(),
+  axis.ticks = element_line(colour="black"),
+  panel.border = element_rect(colour = "black",fill=NA),
+  panel.grid.minor=element_blank(),
+  panel.grid.major.x=element_blank(),
+  panel.grid.major=element_line(color="gray",linetype = "dotted"),
+  panel.background= element_rect(fill = NA)
+  )
+p
+```
+
+    ## `stat_bindot()` using `bins = 30`. Pick better value with `binwidth`.
+
+![](analysis_cam_dat_files/figure-markdown_github-ascii_identifiers/unnamed-chunk-27-1.png)
+
+``` r
+ggsave(plot = p, filename = "../figs/fig_cam.tiff", dpi = 800, units = "mm", width = 80, height = 70)
+```
+
+    ## `stat_bindot()` using `bins = 30`. Pick better value with `binwidth`.
+
+**Revisions**
+
+After peer-review, a couple issues were raised. First, a reviewer asked how reliable the intensity measurements are. That is, when we count one worm in a copepod, how certain are we that there is only one worm in the copepod? Mistakes happen, and usually intensities are underestimated because a worm is overlooked. Presumably this happens in all treatments, but maybe it is more common in the crowded treatment, if two worms in a single copepod are hard to distinguish from one another. Let's take an extreme hypothetical, and assume that every 3rd doubly-infected copepod actually had an extra worm and every 2nd triply-infected copepod had one. The actual error rate has not been measured, it is almost surely lower than 30-50%. In this extreme example, each fish exposed in the double- and triple-infection groups would have received 7 instead of 6 worms, and accordingly the infection rates in these treatments drops by 5 to 7%.
+
+``` r
+cdat$dose2 <- cdat$dose
+cdat$dose2[which(cdat$trtf == "Three/Copepod" | cdat$trtf == "Two/Copepod")] <- 7
+
+cd_avg_hyp <- group_by(cdat, trt)%>%
+  summarize(n = n(), tdose = sum(dose2, na.rm=T), tint = sum(intensity, na.rm=T))%>%
+  mutate(inf.rate = tint/tdose)%>%
+  select(trt, n, inf.rate)
+cd_avg_hyp
+```
+
+    ## # A tibble: 3 x 3
+    ##      trt     n  inf.rate
+    ##   <fctr> <int>     <dbl>
+    ## 1    1x6     8 0.5625000
+    ## 2    2x3    11 0.4155844
+    ## 3    3x2    16 0.3214286
+
+However, this decrease is still not sufficient to be considered statistically significant in the logistic regression model (p = 0.23). Partly, this is due to overdispersion which inflates standard errors. The increased dose and decreased infection rates do not change the fact that the data do not follow a binomial error distribution.
+
+``` r
+mod_hyp <- glm(cbind(intensity, dose2 - intensity) ~ trt, data = cdat, family = 'quasibinomial')
+anova(mod_hyp, test = "F")
+```
+
+    ## Analysis of Deviance Table
+    ## 
+    ## Model: quasibinomial, link: logit
+    ## 
+    ## Response: cbind(intensity, dose2 - intensity)
+    ## 
+    ## Terms added sequentially (first to last)
+    ## 
+    ## 
+    ##      Df Deviance Resid. Df Resid. Dev      F Pr(>F)
+    ## NULL                    34     112.76              
+    ## trt   2   8.1806        32     104.58 1.5227 0.2335
